@@ -1,0 +1,17 @@
+{
+  "name": "思考録 ―― 構造の素描 / Thought Log",
+  "short_name": "思考録",
+  "description": "ふと思いついた構造や設計思想を、端末の中だけに記録する。 / Record passing thoughts on structure and design, stored only on your device.",
+  "lang": "ja",
+  "start_url": "./memo.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EFEAE0",
+  "theme_color": "#2B2926",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

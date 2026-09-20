@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2B2926">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="思考録">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>思考録 ―― 構造の素描 | Thought Log: Sketches of Structure</title>
+<style>
+  :root {
+    --ink: #2B2926;
+    --cream: #EFEAE0;
+    --cream-deep: #E4DECE;
+    --stone: #7A7468;
+    --stone-line: #DDD6C6;
+    --accent: #B23F58;
+    --accent-bg: #FDEDEE;
+    /* 外部フォントは読み込まない（ローカル完結）/ No external fonts: everything stays on the device */
+    --font-mincho: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', 'Noto Serif JP', Georgia, serif;
+    --font-gothic: 'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', 'Meiryo', 'Noto Sans JP', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background-color: var(--cream);
+    color: var(--ink);
+    font-family: var(--font-gothic);
+    line-height: 1.6;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  .app {
+    width: 100%;
+    max-width: 580px;
+    padding: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px))
+             calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* 二言語表示: 日本語を主、英語を従に / Japanese first, English beneath */
+  .en { display: block; font-size: 0.78em; font-weight: 500; opacity: 0.8; line-height: 1.35; }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--stone-line);
+  }
+  h1 { font-family: var(--font-mincho); font-size: 1.15rem; font-weight: 700; line-height: 1.3; }
+  h1 .en { font-family: var(--font-gothic); font-size: 0.68em; font-weight: 500; color: var(--stone); opacity: 1; margin-top: 2px; }
+  .badge {
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: #fff;
+    border: 1px solid var(--stone-line);
+    padding: 4px 12px;
+    border-radius: 20px;
+    color: var(--accent);
+    line-height: 1.35;
+  }
+  .badge .en { font-size: 0.85em; }
+
+  .input-card {
+    background: #fff;
+    border: 1px solid var(--stone-line);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+  }
+  textarea {
+    width: 100%;
+    min-height: 110px;
+    padding: 12px;
+    font-family: var(--font-gothic);
+    font-size: 15px;
+    line-height: 1.6;
+    border: 1.5px solid var(--stone-line);
+    border-radius: 8px;
+    background: var(--cream);
+    color: var(--ink);
+    resize: vertical;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  .action-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .hint { font-size: 0.72rem; color: var(--stone); }
+  .btn {
+    font-family: var(--font-gothic);
+    font-weight: 700;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    padding: 7px 18px;
+    text-align: center;
+    line-height: 1.3;
+    transition: transform .1s ease, opacity .1s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .save-btn { background: var(--accent); color: #fff; flex-shrink: 0; }
+  .save-btn .en { opacity: 0.9; }
+  .btn:focus-visible, .sub-btn:focus-visible, .del-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .export-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .sub-btn {
+    font-family: var(--font-gothic);
+    background: #fff;
+    border: 1px solid var(--stone-line);
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    border-radius: 6px;
+    color: var(--ink);
+    cursor: pointer;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .sub-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .backup-info { font-size: 0.72rem; color: var(--stone); text-align: right; margin-top: -8px; }
+  .backup-info .en { font-size: 1em; opacity: 1; }
+
+  .log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .log-item {
+    background: #fff;
+    border: 1px solid var(--stone-line);
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .log-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+    color: #6F6A60;
+    border-bottom: 1px dashed var(--stone-line);
+    padding-bottom: 6px;
+  }
+  .log-text {
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+  .empty {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--stone);
+    padding: 24px 0;
+  }
+  .empty .en { font-size: 0.9em; margin-top: 2px; }
+  .del-btn {
+    font-family: var(--font-gothic);
+    background: none;
+    border: none;
+    color: #8F8A80;
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    line-height: 1.3;
+  }
+  .del-btn:hover { color: var(--accent); }
+  .del-btn .en { display: inline; font-size: 0.95em; margin-left: 4px; }
+  footer { margin-top: auto; padding: 24px 0; text-align: center; font-size: 0.75rem; color: var(--stone); }
+  footer .en { font-size: 1em; opacity: 1; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>
+      思考録 ―― 構造の素描
+      <span class="en" lang="en">Thought Log — Sketches of Structure</span>
+    </h1>
+    <span class="badge" id="countBadge">0件の記録<span class="en" lang="en">0 entries</span></span>
+  </header>
+
+  <div class="input-card">
+    <textarea id="noteInput" aria-label="思考を書く / Write a thought"
+      placeholder="ふと思いついた構造、数理、違和感、残したい設計思想をここに...&#10;Structures, math, small doubts, design ideas worth keeping — write them here..."></textarea>
+    <div class="action-row">
+      <span class="hint">
+        Ctrl / ⌘ + Enter でも蓄積できます
+        <span class="en" lang="en">You can also press Ctrl / ⌘ + Enter</span>
+      </span>
+      <button id="saveBtn" class="btn save-btn">蓄積する<span class="en" lang="en">Save</span></button>
+    </div>
+  </div>
+
+  <div class="export-bar">
+    <button id="exportTxtBtn" class="sub-btn">📄 テキスト出力 (AI投入用)<span class="en" lang="en">Export text (for AI)</span></button>
+    <button id="exportJsonBtn" class="sub-btn">💾 JSONバックアップ<span class="en" lang="en">JSON backup</span></button>
+    <button id="importBtn" class="sub-btn">📥 JSONから復元<span class="en" lang="en">Restore from JSON</span></button>
+    <input type="file" id="importFile" accept=".json,application/json" aria-label="JSONファイル / JSON file" hidden>
+  </div>
+  <div class="backup-info" id="backupInfo"></div>
+
+  <div class="log-list" id="logList"></div>
+
+  <footer>
+    親父の独り言アーカイブ | Local Only
+    <span class="en" lang="en">Dad's Musings Archive | Stored only on this device</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var STORAGE_KEY = 'oyaji_thought_logs';
+  var BACKUP_KEY = 'oyaji_thought_last_backup';
+  var logs = [];
+
+  var el = {
+    input: document.getElementById('noteInput'),
+    save: document.getElementById('saveBtn'),
+    list: document.getElementById('logList'),
+    badge: document.getElementById('countBadge'),
+    exportTxt: document.getElementById('exportTxtBtn'),
+    exportJson: document.getElementById('exportJsonBtn'),
+    importBtn: document.getElementById('importBtn'),
+    importFile: document.getElementById('importFile'),
+    backupInfo: document.getElementById('backupInfo')
+  };
+
+  // 日英ペアの文言 / Japanese-English message pairs
+  var T = {
+    saveFailed: '保存に失敗しました。ブラウザの保存容量、またはプライベートモードの制限が原因の可能性があります。\n画面の記録は「JSONバックアップ」で書き出してください。\n\nSaving failed. The browser storage may be full, or private mode may be blocking it.\nPlease export what is on screen with "JSON backup".',
+    confirmDelete: 'この記録を削除しますか？\nDelete this entry?',
+    nothingToExport: '書き出す記録がありません。\nThere are no entries to export.',
+    nothingToAdd: '追加する記録はありませんでした（すべて登録済みです）。\nNothing new to add (all entries are already here).',
+    badFile: '読み込めませんでした。このアプリで書き出したJSONファイルを選んでください。\nCould not read the file. Please choose a JSON file exported from this app.'
+  };
+
+  function pad(n){ return ('0' + n).slice(-2); }
+
+  function formatTime(d){
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+      ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+
+  // ファイル名用 / for file names. e.g. 20260920_1530
+  function stamp(d){
+    return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '_' + pad(d.getHours()) + pad(d.getMinutes());
+  }
+
+  // 日本語行 + 英語行の要素を作る / build a "Japanese + English" text element
+  function bilingual(tag, ja, en, cls){
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    node.appendChild(document.createTextNode(ja));
+    var enSpan = document.createElement('span');
+    enSpan.className = 'en';
+    enSpan.setAttribute('lang', 'en');
+    enSpan.textContent = en;
+    node.appendChild(enSpan);
+    return node;
+  }
+
+  function isValidLog(x){
+    return !!x && typeof x === 'object' &&
+      typeof x.id === 'number' &&
+      typeof x.time === 'string' &&
+      typeof x.content === 'string';
+  }
+
+  // 保存データの読み込み。壊れていた場合は上書きされる前に別キーへ退避する
+  // Load saved data. If it is corrupted, keep a copy under another key before anything is overwritten.
+  function loadLogs(){
+    var stored = null;
+    try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) { return []; }
+    if (!stored) return [];
+    try {
+      var parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) return parsed.filter(isValidLog);
+    } catch (e) {}
+    try { localStorage.setItem(STORAGE_KEY + '_corrupt', stored); } catch (e) {}
+    return [];
+  }
+
+  function saveLogs(){
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+      return true;
+    } catch (e) {
+      alert(T.saveFailed);
+      return false;
+    }
+  }
+
+  // 437Hz フィードバック音 / 437 Hz feedback tone
+  var audioCtx = null;
+  function playBeep(){
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(437, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.08);
+    } catch (e) {}
+  }
+
+  function renderBackupInfo(){
+    var t = null;
+    try { t = localStorage.getItem(BACKUP_KEY); } catch (e) {}
+    el.backupInfo.innerHTML = '';
+    if (t) {
+      el.backupInfo.appendChild(bilingual('div', '最終JSONバックアップ: ' + t, 'Last JSON backup: ' + t));
+    } else {
+      el.backupInfo.appendChild(bilingual('div', 'JSONバックアップはまだ行っていません', 'No JSON backup yet'));
+    }
+  }
+
+  function renderBadge(){
+    var n = logs.length;
+    el.badge.innerHTML = '';
+    el.badge.appendChild(document.createTextNode(n + '件の記録'));
+    var en = document.createElement('span');
+    en.className = 'en';
+    en.setAttribute('lang', 'en');
+    en.textContent = n + (n === 1 ? ' entry' : ' entries');
+    el.badge.appendChild(en);
+  }
+
+  function render(){
+    renderBadge();
+    el.list.innerHTML = '';
+
+    if (logs.length === 0) {
+      el.list.appendChild(bilingual('div',
+        'まだ記録がありません。思いついたことを一行から書いてみてください。',
+        'No entries yet. Start with a single line.',
+        'empty'));
+      return;
+    }
+
+    logs.forEach(function(item){
+      var card = document.createElement('div');
+      card.className = 'log-item';
+
+      var meta = document.createElement('div');
+      meta.className = 'log-meta';
+
+      var time = document.createElement('span');
+      time.textContent = item.time;
+      meta.appendChild(time);
+
+      var del = bilingual('button', '削除', 'Delete', 'del-btn');
+      del.onclick = function(){ deleteNote(item.id); };
+      meta.appendChild(del);
+
+      var body = document.createElement('div');
+      body.className = 'log-text';
+      body.textContent = item.content;
+
+      card.appendChild(meta);
+      card.appendChild(body);
+      el.list.appendChild(card);
+    });
+  }
+
+  function addNote(){
+    var text = el.input.value.trim();
+    if (!text) return;
+
+    logs.unshift({ id: Date.now(), time: formatTime(new Date()), content: text });
+    if (!saveLogs()) {
+      // 保存できなかった場合は入力欄の文章を残し、一覧にも加えない
+      // If saving fails, keep the text in the box and do not add it to the list.
+      logs.shift();
+      return;
+    }
+    render();
+    playBeep();
+    el.input.value = '';
+    el.input.focus();
+  }
+
+  function deleteNote(id){
+    if (!confirm(T.confirmDelete)) return;
+    var prev = logs;
+    logs = logs.filter(function(item){ return item.id !== id; });
+    if (!saveLogs()) logs = prev;
+    render();
+  }
+
+  // ダウンロード処理（revokeを遅らせ、Safari等での中断を避ける）
+  // Download helper (revoke is delayed so Safari and others do not cancel the download)
+  function downloadFile(filename, content, type){
+    var blob = new Blob([content], { type: type });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+
+  el.exportTxt.onclick = function(){
+    if (logs.length === 0) return alert(T.nothingToExport);
+    var now = new Date();
+    var header =
+      '思考録 / Thought Log\n' +
+      '書き出し日時 / Exported: ' + formatTime(now) + '\n' +
+      '件数 / Entries: ' + logs.length + '\n\n' +
+      '========================================\n\n';
+    var body = logs.map(function(l){
+      return '【' + l.time + '】\n' + l.content + '\n';
+    }).join('\n----------------------------------------\n\n');
+    downloadFile('思考録_ThoughtLog_' + stamp(now) + '.txt', header + body, 'text/plain;charset=utf-8');
+  };
+
+  el.exportJson.onclick = function(){
+    if (logs.length === 0) return alert(T.nothingToExport);
+    var now = new Date();
+    downloadFile('思考録_ThoughtLog_' + stamp(now) + '.json', JSON.stringify(logs, null, 2), 'application/json');
+    try { localStorage.setItem(BACKUP_KEY, formatTime(now)); } catch (e) {}
+    renderBackupInfo();
+  };
+
+  // JSONからの復元。今ある記録は消さず、IDが重複しないものだけを追加する
+  // Restore from JSON. Existing entries are kept; only entries with new IDs are added.
+  el.importBtn.onclick = function(){ el.importFile.click(); };
+
+  el.importFile.onchange = function(){
+    var file = el.importFile.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try {
+        var data = JSON.parse(reader.result);
+        if (!Array.isArray(data)) throw new Error('not an array');
+        var valid = data.filter(isValidLog);
+        if (valid.length === 0) throw new Error('no valid records');
+
+        var existing = {};
+        logs.forEach(function(l){ existing[l.id] = true; });
+        var added = valid.filter(function(l){ return !existing[l.id]; })
+          .map(function(l){ return { id: l.id, time: l.time, content: l.content }; });
+
+        if (added.length === 0) {
+          alert(T.nothingToAdd);
+          return;
+        }
+        var prev = logs;
+        logs = logs.concat(added).sort(function(a, b){ return b.id - a.id; });
+        if (!saveLogs()) { logs = prev; return; }
+        render();
+        alert(added.length + '件の記録を復元しました。\nRestored ' + added.length + (added.length === 1 ? ' entry.' : ' entries.'));
+      } catch (e) {
+        alert(T.badFile);
+      }
+    };
+    reader.readAsText(file);
+    el.importFile.value = '';
+  };
+
+  el.save.onclick = addNote;
+  el.input.addEventListener('keydown', function(e){
+    if (e.isComposing) return;
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      addNote();
+    }
+  });
+
+  // ブラウザに保存データを消されにくくするよう依頼（対応ブラウザのみ）
+  // Ask the browser not to clear saved data (where supported)
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().catch(function(){});
+    }
+  } catch (e) {}
+
+  // PWA: オフライン起動用のService Worker（http/https で開いたときだけ登録。ファイル直開きでは何もしない）
+  // PWA: service worker for offline start (registered only over http/https; does nothing when opened as a plain file)
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
+
+  logs = loadLogs();
+  render();
+  renderBackupInfo();
+})();
+</script>
+</body>
+</html>
